@@ -314,6 +314,9 @@ public class CardCopyService {
         if (copyFrom.isSuspected()) {
             newCopy.setSuspectedEffect(getLKICopy(copyFrom.getSuspectedEffect(), cachedMap));
         }
+        if (copyFrom.isBestowed()) {
+            newCopy.setBestowEffect(getLKICopy(copyFrom.getBestowEffect(), cachedMap));
+        }
 
         newCopy.setColor(copyFrom.getColor().getColor());
         newCopy.setPhasedOut(copyFrom.getPhasedOut());
@@ -368,8 +371,6 @@ public class CardCopyService {
 
         newCopy.setGameTimestamp(copyFrom.getGameTimestamp());
         newCopy.setLayerTimestamp(copyFrom.getLayerTimestamp());
-
-        newCopy.setBestowTimestamp(copyFrom.getBestowTimestamp());
 
         newCopy.setForetold(copyFrom.isForetold());
         newCopy.setTurnInZone(copyFrom.getTurnInZone());
