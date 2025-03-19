@@ -46,7 +46,7 @@ public class Deck extends DeckBase implements Iterable<Entry<DeckSection, CardPo
     private final Set<String> tags = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     // Supports deferring loading a deck until we actually need its contents. This works in conjunction with
     // the lazy card load feature to ensure we don't need to load all cards on start up.
-    private final Set<String> aiHints = new TreeSet<>();
+    private final HashMap<String, String> aiHints = new HashMap<>();
     private final Map<String, String> draftNotes = new HashMap<>();
     private Map<String, List<String>> deferredSections = null;
     private Map<String, List<String>> loadedSections = null;
@@ -213,7 +213,7 @@ public class Deck extends DeckBase implements Iterable<Entry<DeckSection, CardPo
             result.parts.put(kv.getKey(), cp);
             cp.addAll(kv.getValue());
         }
-        result.setAiHints(StringUtils.join(aiHints, " | "));
+        result.setAiHints(((Deck) clone).getAiHints());
         result.setDraftNotes(draftNotes);
         tags.addAll(result.getTags());
     }
@@ -267,7 +267,7 @@ public class Deck extends DeckBase implements Iterable<Entry<DeckSection, CardPo
                 continue;
             final List<String> cardsInSection = s.getValue();
             ArrayList<String> cardNamesWithNoEdition = getAllCardNamesWithNoSpecifiedEdition(cardsInSection);
-            if (cardNamesWithNoEdition.size() > 0) {
+            if (!cardNamesWithNoEdition.isEmpty()) {
                 includeCardsFromUnspecifiedSet = true;
                 if (smartCardArtSelection)
                     cardsWithNoEdition.put(sec, cardNamesWithNoEdition);
@@ -549,27 +549,18 @@ public class Deck extends DeckBase implements Iterable<Entry<DeckSection, CardPo
         return sum;
     }
 
-    public void setAiHints(String aiHintsInfo) {
-        if (aiHintsInfo == null || aiHintsInfo.trim().isEmpty()) {
-            return;
-        }
-        String[] hints = aiHintsInfo.split("\\|");
-        for (String hint : hints) {
-            aiHints.add(hint.trim());
+    public void setAiHints(HashMap<String, String> aiHintsInfo) {
+        for (String hint : aiHintsInfo.keySet()) {
+            aiHints.put(hint, aiHintsInfo.get(hint));
         }
     }
 
-    public Set<String> getAiHints() {
+    public HashMap<String, String> getAiHints() {
         return aiHints;
     }
 
     public String getAiHint(String name) {
-        for (String aiHint : aiHints) {
-            if (aiHint.toLowerCase().startsWith(name.toLowerCase() + "$")) {
-                return aiHint.substring(aiHint.indexOf("$") + 1).trim();
-            }
-        }
-        return "";
+        return aiHints.getOrDefault(name, null);
     }
 
     public void setDraftNotes(Map<String, String> draftNotes) {

@@ -58,13 +58,13 @@ public class DeckFileHeader {
     private final HashMap<String, String> draftNotes;
 
     private final boolean intendedForAi;
-    private final String aiHints;
+    private final HashMap<String, String> aiHints;
 
     public boolean isIntendedForAi() {
         return intendedForAi;
     }
 
-    public String getAiHints() {
+    public HashMap<String, String> getAiHints() {
         return aiHints;
     }
 
@@ -74,7 +74,6 @@ public class DeckFileHeader {
         this.deckType = DeckFormat.smartValueOf(kvPairs.get(DeckFileHeader.DECK_TYPE), DeckFormat.Constructed);
         this.customPool = kvPairs.getBoolean(DeckFileHeader.CSTM_POOL);
         this.intendedForAi = "computer".equalsIgnoreCase(kvPairs.get(DeckFileHeader.PLAYER)) || "ai".equalsIgnoreCase(kvPairs.get(DeckFileHeader.PLAYER_TYPE));
-        this.aiHints = kvPairs.get(DeckFileHeader.AI_HINTS);
 
         this.tags = new TreeSet<>();
         
@@ -86,6 +85,8 @@ public class DeckFileHeader {
         }
         this.draftNotes = new HashMap<>();
         extractDraftNotes(kvPairs.get(DeckFileHeader.DRAFT_NOTES));
+        this.aiHints = new HashMap<>();
+        extractAiHints(kvPairs.get(DeckFileHeader.AI_HINTS));
     }
 
     private void extractDraftNotes(String rawNotes) {
@@ -105,6 +106,26 @@ public class DeckFileHeader {
             }
 
             draftNotes.put(notes[0].trim(), notes[1].trim());
+        }
+    }
+
+    private void extractAiHints(String rawHints) {
+        if(StringUtils.isBlank(rawHints) ) {
+            return;
+        }
+
+        for(String t : rawHints.split("\\|")) {
+            if (StringUtils.isBlank(t)) {
+                continue;
+            }
+
+            String[] notes = t.trim().split(":", 2);
+
+            if (notes[0].trim().isEmpty() || notes[1].trim().isEmpty()) {
+                continue;
+            }
+
+            aiHints.put(notes[0].trim(), notes[1].trim());
         }
     }
 
