@@ -1828,7 +1828,7 @@ public class Card extends GameEntity implements Comparable<Card>, IHasSVars, ITr
                 GameCommand until = SpellAbilityEffect.exileEffectCommand(getGame(), result);
                 addLeavesPlayCommand(until);
             } else {
-                SpellAbilityEffect.addForgetOnMovedTrigger(this, getZone().getZoneType().toString());
+                SpellAbilityEffect.addForgetOnMovedTrigger(result, getZone().getZoneType().toString());
             }
 
             getGame().getAction().moveToCommand(result, null);
