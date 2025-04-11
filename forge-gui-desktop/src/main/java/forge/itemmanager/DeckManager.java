@@ -347,7 +347,11 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
                 screen = FScreen.DECK_EDITOR_DRAFT;
                 editorCtrl = new CEditorLimited(FModel.getDecks().getWinston(), screen, getCDetailPicture());
                 break;
-
+            case Grinder:
+                screen = FScreen.DECK_EDITOR_CONSTRUCTED;
+                DeckPreferences.setCurrentDeck((deck != null) ? deck.toString() : "");
+                editorCtrl = new CEditorConstructed(getCDetailPicture(), this.gameType);
+                break;
             default:
                 return;
         }
@@ -389,6 +393,7 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
             case Constructed:
             case Draft:
             case Sealed:
+            case Grinder:
                 deck.deleteFromStorage();
                 break;
             case Quest:
@@ -483,5 +488,20 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
             FSkin.drawImage(g, /*overActionIndex == 0 ? icoDeleteOver : */icoDelete, 0, 0, imgSize, imgSize);
             FSkin.drawImage(g, /*overActionIndex == 0 ? icoDeleteOver : */icoEdit, imgSize - 1, -1, imgSize, imgSize);
         }
+    }
+
+    public boolean isGrinderDeck(DeckProxy deck) {
+        return deck.getGameType() == GameType.Grinder;
+    }
+
+    @Override
+    public boolean validateDeck(DeckProxy deck) {
+        if (isGrinderDeck(deck)) {
+            int deckSize = deck.getDeck().getMain().countAll();
+            if (deckSize < 20 || deckSize > 30) {
+                return false;
+            }
+        }
+        return super.validateDeck(deck);
     }
 }
