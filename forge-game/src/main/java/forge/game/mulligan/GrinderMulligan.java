@@ -3,8 +3,9 @@ package forge.game.mulligan;
 import forge.game.card.CardCollection;
 import forge.game.card.Card;
 import forge.game.zone.ZoneType;
+import forge.game.player.Player;
 
-private class GrinderMulligan extends AbstractMulligan {
+public class GrinderMulligan extends AbstractMulligan {
     public GrinderMulligan(Player p, boolean firstMullFree) {
         super(p, firstMullFree);
     }
