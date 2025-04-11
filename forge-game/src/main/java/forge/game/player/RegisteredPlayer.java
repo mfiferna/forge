@@ -183,6 +183,9 @@ public class RegisteredPlayer {
                 || appliedVariants.contains(GameType.MoJhoSto)) { //fix the crash, if somehow the avatar is null, get it directly from the deck
             start.setVanguardAvatars(vanguardAvatar == null ? deck.get(DeckSection.Avatar).toFlatList() : vanguardAvatar.toFlatList());
         }
+	if (appliedVariants.contains(GameType.Grinder)) {
+	    start.setStartingLife(20);
+	}
     	return start;
     }
 
