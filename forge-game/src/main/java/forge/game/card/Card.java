@@ -1883,7 +1883,7 @@ public class Card extends GameEntity implements Comparable<Card>, IHasSVars, ITr
             removeChangedCardTypes(old, 0, updateView);
             removeChangedCardTraits(old, 0);
         }
-        if (!counterType.isKeywordCounter()) {
+        if (counterType.isKeywordCounter()) {
             Card effect = counterTypeKeywordEffects.remove(counterType);
             if (effect != null) {
                 getGame().getAction().exileEffect(effect);
