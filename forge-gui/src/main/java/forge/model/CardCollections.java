@@ -45,6 +45,7 @@ public class CardCollections {
     private IStorage<Deck> oathbreaker;
     private IStorage<Deck> tinyLeaders;
     private IStorage<Deck> brawl;
+    private IStorage<Deck> grinder; // Added for Grinder decks
     private IStorage<Deck> genetic;
     private IStorage<Deck> customStarter;
 
@@ -146,6 +147,14 @@ public class CardCollections {
                     new DeckStorage(new File(ForgeConstants.DECK_BRAWL_DIR), ForgeConstants.DECK_BASE_DIR));
         }
         return brawl;
+    }
+
+    public IStorage<Deck> getGrinder() {
+        if (grinder == null) {
+            grinder = new StorageImmediatelySerialized<>("Grinder decks",
+                    new DeckStorage(new File(ForgeConstants.DECK_GRINDER_DIR), ForgeConstants.DECK_BASE_DIR));
+        }
+        return grinder;
     }
 
     public final IStorage<Deck> getGeneticAIDecks() {

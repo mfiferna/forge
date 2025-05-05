@@ -64,6 +64,7 @@ public enum CDeckEditorUI implements ICDoc {
     private final VOathbreakerDecks vOathbreakerDecks;
     private final VBrawlDecks vBrawlDecks;
     private final VTinyLeadersDecks vTinyLeadersDecks;
+    private final VGrinderDecks vGrinderDecks; // Added for Grinder decks view
     private final VEditorLog vEditorLog;
 
     CDeckEditorUI() {
@@ -79,6 +80,8 @@ public enum CDeckEditorUI implements ICDoc {
         this.vBrawlDecks.setCDetailPicture(cDetailPicture);
         this.vTinyLeadersDecks = VTinyLeadersDecks.SINGLETON_INSTANCE;
         this.vTinyLeadersDecks.setCDetailPicture(cDetailPicture);
+        this.vGrinderDecks = VGrinderDecks.SINGLETON_INSTANCE; // Initialize Grinder view
+        this.vGrinderDecks.setCDetailPicture(cDetailPicture); // Initialize its DeckManager
         this.vEditorLog = VEditorLog.SINGLETON_INSTANCE;
     }
 

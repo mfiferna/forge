@@ -46,6 +46,7 @@ import forge.screens.deckeditor.views.VCurrentDeck;
 import forge.screens.deckeditor.views.VDeckgen;
 import forge.screens.deckeditor.views.VOathbreakerDecks;
 import forge.screens.deckeditor.views.VTinyLeadersDecks;
+import forge.screens.deckeditor.views.VGrinderDecks;
 import forge.screens.home.sanctioned.CSubmenuDraft;
 import forge.screens.home.sanctioned.CSubmenuSealed;
 import forge.screens.match.controllers.CDetailPicture;
@@ -68,6 +69,7 @@ public final class CEditorLimited extends CDeckEditor<DeckGroup> {
     private DragCell oathbreakerDecksParent = null;
     private DragCell brawlDecksParent = null;
     private DragCell tinyLeadersDecksParent = null;
+    private DragCell grinderDecksParent = null;
     private DragCell deckGenParent = null;
     private final List<DeckSection> allSections = new ArrayList<>();
 
@@ -249,6 +251,7 @@ public final class CEditorLimited extends CDeckEditor<DeckGroup> {
         oathbreakerDecksParent = removeTab(VOathbreakerDecks.SINGLETON_INSTANCE);
         brawlDecksParent = removeTab(VBrawlDecks.SINGLETON_INSTANCE);
         tinyLeadersDecksParent = removeTab(VTinyLeadersDecks.SINGLETON_INSTANCE);
+        grinderDecksParent = removeTab(VGrinderDecks.SINGLETON_INSTANCE);
     }
 
     /* (non-Javadoc)
@@ -285,6 +288,9 @@ public final class CEditorLimited extends CDeckEditor<DeckGroup> {
         }
         if (tinyLeadersDecksParent != null) {
             tinyLeadersDecksParent.addDoc(VTinyLeadersDecks.SINGLETON_INSTANCE);
+        }
+        if (grinderDecksParent != null) {
+            grinderDecksParent.addDoc(VGrinderDecks.SINGLETON_INSTANCE);
         }
     }
 }

@@ -402,7 +402,7 @@ public abstract class GameLobby implements IHasGameType {
         if (checkLegality && autoGenerateVariant == null && !isCommanderMatch) {
             for (final LobbySlot slot : activeSlots) {
                 final String name = slot.getName();
-                final String errMsg = GameType.Constructed.getDeckFormat().getDeckConformanceProblem(slot.getDeck());
+                final String errMsg = getGameType().getDeckFormat().getDeckConformanceProblem(slot.getDeck());
                 if (null != errMsg) {
                     SOptionPane.showErrorDialog(Localizer.getInstance().getMessage("lblPlayerDeckError", name, errMsg), Localizer.getInstance().getMessage("lblInvalidDeck"));
                     return null;

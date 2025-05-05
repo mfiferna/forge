@@ -335,6 +335,11 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
                 DeckPreferences.setTinyLeadersDeck((deck != null) ? deck.toString() : "");
                 editorCtrl = new CEditorConstructed(getCDetailPicture(), this.gameType);
                 break;
+            case GRINDER: // Added case for Grinder
+                screen = FScreen.DECK_EDITOR_CONSTRUCTED;
+                // DeckPreferences.setGrinderDeck((deck != null) ? deck.toString() : ""); // Add if needed later
+                editorCtrl = new CEditorConstructed(getCDetailPicture(), this.gameType);
+                break;
             case Sealed:
                 screen = FScreen.DECK_EDITOR_SEALED;
                 editorCtrl = new CEditorLimited(FModel.getDecks().getSealed(), screen, getCDetailPicture());

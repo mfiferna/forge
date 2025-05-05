@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public class DeckPreferences {
     private static String selectedDeckType = "", currentDeck = "", draftDeck = "", sealedDeck = "", commanderDeck = "",
-            oathbreakerDeck = "", tinyLeadersDeck = "", brawlDeck = "", planarDeck = "", schemeDeck = "";
+            oathbreakerDeck = "", tinyLeadersDeck = "", brawlDeck = "", planarDeck = "", schemeDeck = "", grinderDeck = "";
     private static Map<String, DeckPreferences> allPrefs = new HashMap<>();
 
     public static DeckType getSelectedDeckType() {
@@ -82,9 +82,20 @@ public class DeckPreferences {
     public static String getTinyLeadersDeck() {
         return tinyLeadersDeck;
     }
+
     public static void setTinyLeadersDeck(String tinyLeadersDeck0) {
         if (tinyLeadersDeck.equals(tinyLeadersDeck0)) { return; }
         tinyLeadersDeck = tinyLeadersDeck0;
+        save();
+    }
+
+    public static String getGrinderDeck() {
+        return grinderDeck;
+    }
+
+    public static void setGrinderDeck(String grinderDeck0) {
+        if (grinderDeck.equals(grinderDeck0)) { return; }
+        grinderDeck = grinderDeck0;
         save();
     }
 
@@ -139,6 +150,7 @@ public class DeckPreferences {
             tinyLeadersDeck = root.getAttribute("tinyLeadersDeck");
             planarDeck = root.getAttribute("planarDeck");
             schemeDeck = root.getAttribute("schemeDeck");
+            grinderDeck = root.getAttribute("grinderDeck");
 
             final NodeList cards = document.getElementsByTagName("deck");
             for (int i = 0; i < cards.getLength(); i++) {
@@ -172,6 +184,7 @@ public class DeckPreferences {
             root.setAttribute("tinyLeadersDeck", tinyLeadersDeck);
             root.setAttribute("planarDeck", planarDeck);
             root.setAttribute("schemeDeck", schemeDeck);
+            root.setAttribute("grinderDeck", grinderDeck);
             document.appendChild(root);
 
             for (Map.Entry<String, DeckPreferences> entry : allPrefs.entrySet()) {

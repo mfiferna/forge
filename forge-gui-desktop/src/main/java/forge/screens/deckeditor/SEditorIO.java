@@ -73,6 +73,10 @@ public class SEditorIO {
                     COathbreakerDecks.SINGLETON_INSTANCE.refresh();
                     VOathbreakerDecks.SINGLETON_INSTANCE.getLstDecks().setSelectedString(deckStr);
                     break;
+                case GRINDER:
+                    CGrinderDecks.SINGLETON_INSTANCE.refresh(); // Added for Grinder deck list view
+                    VGrinderDecks.SINGLETON_INSTANCE.getLstDecks().setSelectedString(deckStr); // Added for Grinder deck list view
+                    break;
                 default:
                     CAllDecks.SINGLETON_INSTANCE.refresh(); //pull new deck into deck list and select it
                     VAllDecks.SINGLETON_INSTANCE.getLstDecks().setSelectedString(deckStr);

@@ -166,6 +166,9 @@ public final class CEditorConstructed extends CDeckEditor<Deck> {
             case TinyLeaders:
                 this.controller = new DeckController<>(FModel.getDecks().getTinyLeaders(), this, newCreator);
                 break;
+            case GRINDER: // Added case for Grinder
+                this.controller = new DeckController<>(FModel.getDecks().getGrinder(), this, newCreator);
+                break;
             default:
         }
 

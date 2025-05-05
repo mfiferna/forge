@@ -492,6 +492,16 @@ public class DeckProxy implements InventoryItem {
         return result;
     }
 
+    public static Iterable<DeckProxy> getAllGrinderDecks() {
+        return getAllGrinderDecks(null);
+    }
+    public static Iterable<DeckProxy> getAllGrinderDecks(Predicate<Deck> filter) {
+        final List<DeckProxy> result = new ArrayList<>();
+        // Assume FModel.getDecks().getGrinder() exists or will be added
+        addDecksRecursivelly("Grinder", GameType.GRINDER, result, "", FModel.getDecks().getGrinder(), filter);
+        return result;
+    }
+
     public static Iterable<DeckProxy> getAllSchemeDecks() {
         return getAllSchemeDecks(null);
     }

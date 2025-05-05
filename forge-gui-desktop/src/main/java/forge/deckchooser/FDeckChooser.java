@@ -290,7 +290,7 @@ public class FDeckChooser extends JPanel implements IDecksComboBoxListener {
         // Filter constructed decks to only show those valid for Grinder format
         List<DeckProxy> grinderDecks = new ArrayList<>();
         DeckFormat grinderFormat = DeckFormat.GRINDER; // Use the correct format
-        for (DeckProxy deck : DeckProxy.getAllConstructedDecks()) {
+        for (DeckProxy deck : DeckProxy.getAllGrinderDecks()) {
              Deck d = deck.getDeck();
              if (d != null && grinderFormat.getDeckConformanceProblem(d) == null) {
                  grinderDecks.add(deck);
