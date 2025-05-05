@@ -339,9 +339,12 @@ public class Game {
             if (startingLife != -1) {
                 pl.setStartingLife(startingLife);
             } else {
-                pl.setStartingLife(psc.getStartingLife());
+                // Use GameType to determine starting life
+                pl.setStartingLife(rules.getGameType().getStartingLife());
             }
-            pl.setMaxHandSize(psc.getStartingHand());
+            // Use GameType to determine max hand size
+            pl.setMaxHandSize(rules.getGameType().getMaxHandSize());
+            // Initial draw size remains based on RegisteredPlayer (default 7)
             pl.setStartingHandSize(psc.getStartingHand());
 
             if (psc.getManaShards() > 0) {

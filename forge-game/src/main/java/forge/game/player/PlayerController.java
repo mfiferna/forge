@@ -235,6 +235,7 @@ public abstract class PlayerController {
     public abstract boolean mulliganKeepHand(Player player, int cardsToReturn);
     public abstract CardCollectionView londonMulliganReturnCards(Player mulliganingPlayer, int cardsToReturn);
     public abstract boolean confirmMulliganScry(final Player p);
+    public abstract CardCollection grinderMulliganDiscardCards(Player player, int cardsToDiscard); // Added for Grinder mulligan
 
     public abstract List<SpellAbility> chooseSpellAbilityToPlay();
     public abstract boolean playChosenSpellAbility(SpellAbility sa);

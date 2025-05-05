@@ -37,6 +37,14 @@ public class MulliganService {
         boolean firstMullFree = game.getPlayers().size() > 2 || game.getRules().hasAppliedVariant(GameType.Brawl);
 
         for (Player player : whoCanMulligan) {
+            // Check for format-specific mulligan rule first
+            String formatMulliganRule = game.getRules().getGameType().getMulliganRule();
+            if ("Grinder".equals(formatMulliganRule)) {
+                mulligans.add(new GrinderMulligan(player, firstMullFree));
+                continue; // Skip default logic if format rule handled
+            }
+
+            // Fallback to global mulligan rule if no format-specific rule applies
             MulliganDefs.MulliganRule rule = StaticData.instance().getMulliganRule();
             switch (rule) {
                 case Original:

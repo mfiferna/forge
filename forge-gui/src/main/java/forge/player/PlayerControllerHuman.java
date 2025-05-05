@@ -1489,6 +1489,13 @@ public class PlayerControllerHuman extends PlayerController implements IGameCont
     }
 
     @Override
+    public CardCollection grinderMulliganDiscardCards(final Player mulliganingPlayer, int cardsToDiscard) {
+        final InputGrinderDiscard inp = new InputGrinderDiscard(this, mulliganingPlayer, cardsToDiscard);
+        inp.showAndWait();
+        return inp.getSelectedCards();
+    }
+
+    @Override
     public void declareAttackers(final Player attackingPlayer, final Combat combat) {
         if (mayAutoPass()) {
             if (CombatUtil.validateAttackers(combat)) {

@@ -69,7 +69,15 @@ public enum GameType {
         deck.getOrCreate(DeckSection.Avatar).add(StaticData.instance().getVariantCards()
                 .getCard("Stonehewer Giant Avatar"), 1);
         return deck;
-    });
+    }),
+    GRINDER             (DeckFormat.GRINDER, false, false, false, "lblGrinder", "lblGrinderDesc") { // Added for Grinder format
+        @Override
+        public int getStartingLife() { return 10; }
+        @Override
+        public int getMaxHandSize() { return 5; }
+        @Override
+        public String getMulliganRule() { return "Grinder"; }
+    }; // Semicolon added
 
     private final DeckFormat deckFormat;
     private final boolean isCardPoolLimited, canSideboard, addWonCardsMidGame;
@@ -142,6 +150,7 @@ public enum GameType {
         }*/
     }
 
+    @Override
     public String toString() {
         return name;
     }
@@ -152,6 +161,29 @@ public enum GameType {
     public String getDescription() {
         return description;
     }
+
+    // New methods with default implementations
+    /**
+     * @return The starting life total for this game type. Defaults to 20.
+     */
+    public int getStartingLife() {
+        return 20;
+    }
+
+    /**
+     * @return The maximum hand size for this game type. Defaults to 7.
+     */
+    public int getMaxHandSize() {
+        return 7;
+    }
+
+    /**
+     * @return The specific mulligan rule identifier for this game type, or null to use the global default.
+     */
+    public String getMulliganRule() {
+        return null; // Use global default
+    }
+    // End of new methods
 
     public static GameType smartValueOf(String name) {
         return Enums.getIfPresent(GameType.class, name).orNull();
