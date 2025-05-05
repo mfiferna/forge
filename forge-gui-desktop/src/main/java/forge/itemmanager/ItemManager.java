@@ -417,6 +417,15 @@ public abstract class ItemManager<T extends InventoryItem> extends JPanel implem
     }
 
     /**
+     * Sets the text of the ratio/validation label.
+     * @param text the text to set
+     */
+    public void setDeckValidationText(final String text) {
+        this.lblRatio.setText(text);
+        this.lblRatio.setToolTipText(text); // Use full text as tooltip for now
+    }
+
+    /**
      *
      * Gets the item pool.
      *

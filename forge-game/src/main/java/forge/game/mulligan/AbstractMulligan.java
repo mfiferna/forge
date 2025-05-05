@@ -23,6 +23,9 @@ public abstract class AbstractMulligan {
 
     public abstract boolean canMulligan();
     public abstract int handSizeAfterNextMulligan();
+    public int finalHandSize() {
+        return player.getStartingHandSize() - tuckCardsAfterKeepHand();
+    }
     public int tuckCardsAfterKeepHand() {
         return 0;
     }
@@ -42,7 +45,7 @@ public abstract class AbstractMulligan {
         player.shuffle(null);
         timesMulliganed++;
         mulliganDraw();
-        player.onMulliganned();
+        player.onMulliganned(this);
     }
 
     public void keep() {

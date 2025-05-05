@@ -1,0 +1,371 @@
+diff --git a/forge-game/src/main/java/forge/game/Game.java b/forge-game/src/main/java/forge/game/Game.java
+index 80b308533b..b99a2b0213 100644
+--- a/forge-game/src/main/java/forge/game/Game.java
++++ b/forge-game/src/main/java/forge/game/Game.java
+@@ -343,6 +343,10 @@ public class Game {
+             }
+             pl.setMaxHandSize(psc.getStartingHand());
+             pl.setStartingHandSize(psc.getStartingHand());
++            // Apply Grinder specific max hand size limit AFTER setting initial based on startingHand
++            if (match.getRules().getGameType() == GameType.Grinder) {
++                pl.setMaxHandSize(5);
++            }
+ 
+             if (psc.getManaShards() > 0) {
+                 pl.setNumManaShards(psc.getManaShards());
+diff --git a/forge-game/src/main/java/forge/game/mulligan/GrinderMulligan.java b/forge-game/src/main/java/forge/game/mulligan/GrinderMulligan.java
+index 8022543efb..6e2c1d84b6 100644
+--- a/forge-game/src/main/java/forge/game/mulligan/GrinderMulligan.java
++++ b/forge-game/src/main/java/forge/game/mulligan/GrinderMulligan.java
+@@ -12,12 +12,17 @@ public class GrinderMulligan extends AbstractMulligan {
+ 
+     @Override
+     public boolean canMulligan() {
+-        return !kept && timesMulliganed < player.getMaxHandSize();
++        // Grinder allows mulligans like normal, but always draws 7 and discards 2 after keeping.
++        // The handSizeAfterNextMulligan() ensures we draw 7.
++        // The tuckCardsAfterKeepHand() ensures we discard 2.
++        // The limit condition prevents infinite mulligans if something goes wrong.
++        return !kept && timesMulliganed < 7; // Limit mulligans for safety
+     }
+ 
+     @Override
+     public int handSizeAfterNextMulligan() {
+-        return player.getMaxHandSize();
++        // Always draw the starting hand size for Grinder
++        return player.getStartingHandSize();
+     }
+ 
+     @Override
+@@ -41,7 +46,8 @@ public class GrinderMulligan extends AbstractMulligan {
+ 
+     @Override
+     public void mulliganDraw() {
+-        player.drawCards(handSizeAfterNextMulligan());
++        // Always draw the starting hand size for Grinder
++        player.drawCards(player.getStartingHandSize());
+         int tuckingCards = tuckCardsAfterKeepHand();
+ 
+         for (final Card c : player.getController().londonMulliganReturnCards(player, tuckingCards)) {
+@@ -51,6 +57,7 @@ public class GrinderMulligan extends AbstractMulligan {
+ 
+     @Override
+     public int tuckCardsAfterKeepHand() {
++        // Grinder discard rule: Discard 2 cards initially, plus 1 for each mulligan taken.
+         return 2 + timesMulliganed;
+     }
+ }
+diff --git a/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java b/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java
+index 14571d4c5f..4ebcf07583 100644
+--- a/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java
++++ b/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java
+@@ -184,7 +184,8 @@ public class RegisteredPlayer {
+             start.setVanguardAvatars(vanguardAvatar == null ? deck.get(DeckSection.Avatar).toFlatList() : vanguardAvatar.toFlatList());
+         }
+ 	if (appliedVariants.contains(GameType.Grinder)) {
+-	    start.setStartingLife(20);
++	    start.setStartingLife(10); // Grinder starts with 10 life
++	    start.setStartingHand(7); // Grinder starts with 7 cards (before discard)
+ 	}
+     	return start;
+     }
+diff --git a/forge-gui-desktop/src/main/java/forge/deckchooser/FDeckChooser.java b/forge-gui-desktop/src/main/java/forge/deckchooser/FDeckChooser.java
+index 285b59567a..d85f5ac49f 100644
+--- a/forge-gui-desktop/src/main/java/forge/deckchooser/FDeckChooser.java
++++ b/forge-gui-desktop/src/main/java/forge/deckchooser/FDeckChooser.java
+@@ -144,9 +144,6 @@ public class FDeckChooser extends JPanel implements IDecksComboBoxListener {
+         case TinyLeaders:
+             updateDecks(DeckProxy.getAllTinyLeadersDecks(), ItemManagerConfig.COMMANDER_DECKS);
+             break;
+-        case Grinder:
+-            updateDecks(DeckProxy.getAllConstructedDecks(), ItemManagerConfig.CONSTRUCTED_DECKS);
+-            break;
+         default:
+             updateDecks(DeckProxy.getAllConstructedDecks(), ItemManagerConfig.CONSTRUCTED_DECKS);
+             break;
+@@ -650,9 +647,6 @@ public class FDeckChooser extends JPanel implements IDecksComboBoxListener {
+             case NET_ARCHIVE_BLOCK_DECK:
+                 updateNetArchiveBlockDecks();
+                 break;
+-            case Grinder:
+-                updateCustom();
+-                break;
+             default:
+                 break; //other deck types not currently supported here
+         }
+diff --git a/forge-gui-desktop/src/main/java/forge/itemmanager/DeckManager.java b/forge-gui-desktop/src/main/java/forge/itemmanager/DeckManager.java
+index a9af5c377c..b5390af5fe 100644
+--- a/forge-gui-desktop/src/main/java/forge/itemmanager/DeckManager.java
++++ b/forge-gui-desktop/src/main/java/forge/itemmanager/DeckManager.java
+@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
+ 
+ import forge.Singletons;
+ import forge.deck.Deck;
++import forge.deck.DeckFormat;
+ import forge.deck.DeckBase;
+ import forge.deck.DeckProxy;
+ import forge.deck.io.DeckPreferences;
+@@ -490,18 +491,48 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
+         }
+     }
+ 
+-    public boolean isGrinderDeck(DeckProxy deck) {
+-        return deck.getGameType() == GameType.Grinder;
+-    }
+ 
+-    @Override
+-    public boolean validateDeck(DeckProxy deck) {
+-        if (isGrinderDeck(deck)) {
+-            int deckSize = deck.getDeck().getMain().countAll();
++    public boolean validateDeck(DeckProxy deckProxy) {
++        Deck deck = deckProxy.getDeck();
++        if (deck == null) {
++            System.err.println("Cannot validate null deck proxy or underlying deck.");
++            return false;
++        }
++
++        // Use the GameType associated with the DeckManager instance.
++        GameType managerGameType = this.getGameType();
++
++        if (managerGameType == GameType.Grinder) {
++            // Grinder specific validation: Deck size 20-30
++            int deckSize = deck.getMain().countAll();
+             if (deckSize < 20 || deckSize > 30) {
+-                return false;
++                 System.err.println("Deck '" + deck.getName() + "' failed Grinder size validation (20-30 cards): " + deckSize);
++                return false; // Failed Grinder size rule
++            }
++            // Grinder decks still need to conform to base Constructed rules (e.g., max 4 copies)
++            String conformanceProblem = DeckFormat.Constructed.getDeckConformanceProblem(deck);
++            if (conformanceProblem != null) {
++                 System.err.println("Deck '" + deck.getName() + "' failed base Constructed validation for Grinder: " + conformanceProblem);
++                 return false;
+             }
++            return true; // Passed Grinder validation
++        } else {
++            // Standard validation for other game types managed by this DeckManager
++            DeckFormat format = managerGameType.getDeckFormat();
++            if (format != null) {
++                String conformanceProblem = format.getDeckConformanceProblem(deck);
++                 if (conformanceProblem != null) {
++                     // Don't print error here, let the format handle reporting if needed
++                     // System.err.println("Deck '" + deck.getName() + "' failed validation for format " + format.name() + " (GameType: " + managerGameType.name() + "): " + conformanceProblem);
++                     return false;
++                 }
++
++                 return true; // Passed standard validation
++            }
++            // Default to true if no specific format check applies for the GameType
++            // System.err.println("Warning: No specific DeckFormat validation applied for GameType " + managerGameType.name() + " for deck '" + deck.getName() + "'. Assuming valid.");
++            return true;
+         }
+-        return super.validateDeck(deck);
+     }
++
+ }
+diff --git a/forge-gui-desktop/src/main/java/forge/itemmanager/ItemManager.java b/forge-gui-desktop/src/main/java/forge/itemmanager/ItemManager.java
+index 30ba107e60..7db899fad9 100644
+--- a/forge-gui-desktop/src/main/java/forge/itemmanager/ItemManager.java
++++ b/forge-gui-desktop/src/main/java/forge/itemmanager/ItemManager.java
+@@ -416,6 +416,15 @@ public abstract class ItemManager<T extends InventoryItem> extends JPanel implem
+         this.lblCaption.setLabelFor(this.listView.getTable());
+     }
+ 
++    /**
++     * Sets the text of the ratio/validation label.
++     * @param text the text to set
++     */
++    public void setDeckValidationText(final String text) {
++        this.lblRatio.setText(text);
++        this.lblRatio.setToolTipText(text); // Use full text as tooltip for now
++    }
++
+     /**
+      *
+      * Gets the item pool.
+diff --git a/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/CEditorConstructed.java b/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/CEditorConstructed.java
+index a08da9e6a1..f2dd2a3786 100644
+--- a/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/CEditorConstructed.java
++++ b/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/CEditorConstructed.java
+@@ -127,6 +127,10 @@ public final class CEditorConstructed extends CDeckEditor<Deck> {
+ 
+                 wantUnique = true;
+                 break;
++            case Grinder:
++                // Grinder uses the standard card pool like Constructed
++                normalPool = FModel.getAllCardsNoAlt();
++                break;
+             default:
+         }
+ 
+@@ -188,6 +192,8 @@ public final class CEditorConstructed extends CDeckEditor<Deck> {
+                 case TinyLeaders:
+                 case Brawl:
+                     return CardLimit.Singleton;
++                case Grinder:
++                    return CardLimit.Default; // Grinder follows standard 4-card limit
+                 default:
+             }
+         }
+diff --git a/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/DeckController.java b/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/DeckController.java
+index 4902a5e318..14160a41c0 100644
+--- a/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/DeckController.java
++++ b/forge-gui-desktop/src/main/java/forge/screens/deckeditor/controllers/DeckController.java
+@@ -20,7 +20,9 @@ package forge.screens.deckeditor.controllers;
+ import forge.StaticData;
+ import forge.card.CardEdition;
+ import forge.deck.*;
++import forge.game.GameType;
+ import forge.item.PaperCard;
++import forge.itemmanager.ItemManager;
+ import forge.screens.deckeditor.menus.DeckFileMenu;
+ import forge.screens.deckeditor.views.VCurrentDeck;
+ import forge.screens.home.gauntlet.*;
+@@ -429,7 +431,67 @@ public class DeckController<T extends DeckBase> {
+ 
+         VCurrentDeck.SINGLETON_INSTANCE.getTabLabel().setText(tabCaption);
+         VCurrentDeck.SINGLETON_INSTANCE.getTxfTitle().setText(title);
+-        VCurrentDeck.SINGLETON_INSTANCE.getItemManager().setCaption(itemManagerCaption);
++
++        // Update validation status along with captions
++        updateValidationDisplay();
++
+         DeckFileMenu.updateSaveEnabled();
+     }
++
++    // New method to handle deck validation display
++    private void updateValidationDisplay() {
++        if (model == null) return; // No deck loaded
++
++        ItemManager<?> deckItemManager = VCurrentDeck.SINGLETON_INSTANCE.getItemManager();
++        if (deckItemManager == null) return; // ItemManager not ready
++
++        int currentSize = 0;
++        // Cast model to Deck to access specific methods, assuming it's a Deck in this context
++        Deck deckModel = (model instanceof Deck) ? (Deck) model : null;
++
++        if (deckModel != null && deckModel.getMain() != null) {
++            currentSize = deckModel.getMain().countAll(); // Get main deck size directly from model
++        }
++
++        String validationStatus = "";
++        String deckSizeString = "(" + currentSize + ")"; // Default display just shows main deck count
++
++        // Determine the correct DeckFormat based on the editor's GameType
++        DeckFormat format = view.getGameType().getDeckFormat();
++
++        if (view.getGameType() == GameType.Grinder) {
++            // Grinder specific validation
++            if (currentSize < 20) {
++                validationStatus = " (Too few cards! Min 20)";
++            } else if (currentSize > 30) {
++                validationStatus = " (Too many cards! Max 30)";
++            } else {
++                // Check base constructed rules for Grinder decks within size limits
++                String conformanceProblem = DeckFormat.Constructed.getDeckConformanceProblem(deckModel); // Use the casted variable
++                if (conformanceProblem != null) {
++                    validationStatus = " (Invalid: " + conformanceProblem + ")";
++                } else {
++                    validationStatus = " (Legal size)";
++                }
++            }
++        } else if (format != null) {
++            // Standard validation for other formats
++            String conformanceProblem = format.getDeckConformanceProblem(deckModel); // Use the casted variable
++            if (conformanceProblem != null) {
++                validationStatus = " (Invalid: " + conformanceProblem + ")";
++            } else {
++                 validationStatus = " (Legal)"; // Indicate legal if no problems found
++            }
++            // Include sideboard size for standard formats if applicable
++            int sbSize = (deckModel == null || deckModel.get(DeckSection.Sideboard) == null) ? 0 : deckModel.get(DeckSection.Sideboard).countAll();
++            if (sbSize > 0) {
++                 deckSizeString = "(" + currentSize + " + " + sbSize + " SB)";
++            }
++        } else {
++             validationStatus = " (Unknown Format)";
++        }
++
++        // Update the label using the new setter method
++        deckItemManager.setDeckValidationText(deckSizeString + validationStatus);
++    }
+ }
+diff --git a/forge-gui-desktop/src/main/java/forge/screens/home/VLobby.java b/forge-gui-desktop/src/main/java/forge/screens/home/VLobby.java
+index ee4852447d..668e7b0a28 100644
+--- a/forge-gui-desktop/src/main/java/forge/screens/home/VLobby.java
++++ b/forge-gui-desktop/src/main/java/forge/screens/home/VLobby.java
+@@ -90,8 +90,9 @@ public class VLobby implements ILobbyView {
+     private final VariantCheckBox vntPlanechase = new VariantCheckBox(GameType.Planechase);
+     private final VariantCheckBox vntArchenemy = new VariantCheckBox(GameType.Archenemy);
+     private final VariantCheckBox vntArchenemyRumble = new VariantCheckBox(GameType.ArchenemyRumble);
++    private final VariantCheckBox vntGrinder = new VariantCheckBox(GameType.Grinder);
+     private final ImmutableList<VariantCheckBox> vntBoxesLocal  =
+-            ImmutableList.of(vntVanguard, vntMomirBasic, vntMoJhoSto, vntCommander, vntOathbreaker, vntBrawl, vntTinyLeaders, vntPlanechase, vntArchenemy, vntArchenemyRumble);
++            ImmutableList.of(vntVanguard, vntMomirBasic, vntMoJhoSto, vntCommander, vntOathbreaker, vntBrawl, vntTinyLeaders, vntGrinder, vntPlanechase, vntArchenemy, vntArchenemyRumble);
+     private final ImmutableList<VariantCheckBox> vntBoxesNetwork =
+             ImmutableList.of(vntVanguard, vntMomirBasic, vntMoJhoSto, vntCommander, vntOathbreaker, vntBrawl, vntTinyLeaders /*, vntPlanechase, vntArchenemy, vntArchenemyRumble */);
+ 
+@@ -144,7 +145,12 @@ public class VLobby implements ILobbyView {
+         variantsPanel.setOpaque(false);
+         variantsPanel.add(newLabel(localizer.getMessage("lblVariants")));
+         for (final VariantCheckBox vcb : vntBoxes) {
++            // Add checkboxes to the panel
+             variantsPanel.add(vcb);
++            // Ensure Grinder is added if it's in the list (it's only in vntBoxesLocal currently)
++            if (vcb == vntTinyLeaders && vntBoxes == vntBoxesLocal) { // Add Grinder after TinyLeaders for local games
++                variantsPanel.add(vntGrinder);
++            }
+         }
+ 
+         constructedFrame.add(new FScrollPane(variantsPanel, false, true,
+diff --git a/forge-gui/src/main/java/forge/deck/DeckProxy.java b/forge-gui/src/main/java/forge/deck/DeckProxy.java
+index 29ce16aa64..e9eb611f53 100644
+--- a/forge-gui/src/main/java/forge/deck/DeckProxy.java
++++ b/forge-gui/src/main/java/forge/deck/DeckProxy.java
+@@ -34,6 +34,7 @@ public class DeckProxy implements InventoryItem {
+     protected final String deckType;
+     protected final IStorage<? extends IHasName> storage;
+ 
++    private final GameType gameType;
+     // cached values
+     protected ColorSet color;
+     protected ColorSet colorIdentity;
+@@ -65,6 +66,7 @@ public class DeckProxy implements InventoryItem {
+         this.storage = storage;
+         this.path = path;
+         this.fnGetDeck = fnGetDeck;
++        this.gameType = type;
+         // gametype could give us a hint whether the storage is updateable and enable choice of right editor for this deck
+     }
+ 
+@@ -79,6 +81,10 @@ public class DeckProxy implements InventoryItem {
+         return "Deck";
+     }
+ 
++    public GameType getGameType() {
++        return gameType;
++    }
++
+     public Deck getDeck() {
+         return deck instanceof Deck && fnGetDeck == null ? (Deck) deck : fnGetDeck.apply(deck);
+     }
+diff --git a/forge-gui/src/main/java/forge/gamemodes/match/GameLobby.java b/forge-gui/src/main/java/forge/gamemodes/match/GameLobby.java
+index fde11f22e4..e5bc8b89a7 100644
+--- a/forge-gui/src/main/java/forge/gamemodes/match/GameLobby.java
++++ b/forge-gui/src/main/java/forge/gamemodes/match/GameLobby.java
+@@ -276,6 +276,15 @@ public abstract class GameLobby implements IHasGameType {
+             data.appliedVariants.remove(GameType.Vanguard);
+             data.appliedVariants.remove(GameType.MomirBasic);
+             break;
++        case Grinder:
++            // Grinder conflicts with Commander-style variants and other special variants
++            data.appliedVariants.remove(GameType.Commander);
++            data.appliedVariants.remove(GameType.Oathbreaker);
++            data.appliedVariants.remove(GameType.TinyLeaders);
++            data.appliedVariants.remove(GameType.Brawl);
++            data.appliedVariants.remove(GameType.MomirBasic);
++            data.appliedVariants.remove(GameType.MoJhoSto);
++            break;
+         default:
+             break;
+         }

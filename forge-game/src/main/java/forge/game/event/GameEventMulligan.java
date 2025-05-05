@@ -1,5 +1,6 @@
 package forge.game.event;
 
+import forge.game.mulligan.AbstractMulligan;
 import forge.game.player.Player;
 
 /** 
@@ -9,8 +10,10 @@ import forge.game.player.Player;
 public class GameEventMulligan extends GameEvent {
 
     public final Player player;
-    public GameEventMulligan(Player p) {
+    public final AbstractMulligan mulligan;
+    public GameEventMulligan(Player p, AbstractMulligan m) {
         player = p;
+        mulligan = m;
     }
 
     @Override

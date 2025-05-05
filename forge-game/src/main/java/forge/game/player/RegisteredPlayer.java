@@ -24,6 +24,7 @@ public class RegisteredPlayer {
 
     private int startingLife = 20;
     private int startingHand = 7;
+    private int maxHandSize = 7;
     private int manaShards = 0;
     private Iterable<IPaperCard> cardsOnBattlefield = null;
     private Iterable<IPaperCard> extraCardsOnBattlefield = null;
@@ -112,6 +113,10 @@ public class RegisteredPlayer {
         this.startingHand = startingHand0;
     }
 
+    public void setMaxHandSize(int maxHandSize0) {
+        this.maxHandSize = maxHandSize0;
+    }
+
     public Iterable<? extends IPaperCard> getSchemes() {
         return schemes == null ? EmptyList : schemes;
     }
@@ -184,7 +189,9 @@ public class RegisteredPlayer {
             start.setVanguardAvatars(vanguardAvatar == null ? deck.get(DeckSection.Avatar).toFlatList() : vanguardAvatar.toFlatList());
         }
 	if (appliedVariants.contains(GameType.Grinder)) {
-	    start.setStartingLife(20);
+	    start.setStartingLife(10); // Grinder starts with 10 life
+	    start.setStartingHand(7); // Grinder starts with 7 cards (before discard)
+        start.setMaxHandSize(5); // Grinder starts with 5 cards in hand (after discard)
 	}
     	return start;
     }

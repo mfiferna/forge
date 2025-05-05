@@ -144,9 +144,6 @@ public class FDeckChooser extends JPanel implements IDecksComboBoxListener {
         case TinyLeaders:
             updateDecks(DeckProxy.getAllTinyLeadersDecks(), ItemManagerConfig.COMMANDER_DECKS);
             break;
-        case Grinder:
-            updateDecks(DeckProxy.getAllConstructedDecks(), ItemManagerConfig.CONSTRUCTED_DECKS);
-            break;
         default:
             updateDecks(DeckProxy.getAllConstructedDecks(), ItemManagerConfig.CONSTRUCTED_DECKS);
             break;
@@ -649,9 +646,6 @@ public class FDeckChooser extends JPanel implements IDecksComboBoxListener {
                 break;
             case NET_ARCHIVE_BLOCK_DECK:
                 updateNetArchiveBlockDecks();
-                break;
-            case Grinder:
-                updateCustom();
                 break;
             default:
                 break; //other deck types not currently supported here

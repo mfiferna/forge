@@ -34,6 +34,7 @@ public class DeckProxy implements InventoryItem {
     protected final String deckType;
     protected final IStorage<? extends IHasName> storage;
 
+    private final GameType gameType;
     // cached values
     protected ColorSet color;
     protected ColorSet colorIdentity;
@@ -65,6 +66,7 @@ public class DeckProxy implements InventoryItem {
         this.storage = storage;
         this.path = path;
         this.fnGetDeck = fnGetDeck;
+        this.gameType = type;
         // gametype could give us a hint whether the storage is updateable and enable choice of right editor for this deck
     }
 
@@ -77,6 +79,10 @@ public class DeckProxy implements InventoryItem {
     public String getItemType() {
         // Could distinguish decks depending on gametype
         return "Deck";
+    }
+
+    public GameType getGameType() {
+        return gameType;
     }
 
     public Deck getDeck() {

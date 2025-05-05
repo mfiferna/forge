@@ -35,6 +35,7 @@ import forge.game.event.*;
 import forge.game.keyword.*;
 import forge.game.keyword.KeywordCollection.KeywordCollectionView;
 import forge.game.mana.ManaPool;
+import forge.game.mulligan.AbstractMulligan;
 import forge.game.phase.PhaseHandler;
 import forge.game.phase.PhaseType;
 import forge.game.replacement.ReplacementEffect;
@@ -2800,8 +2801,8 @@ public class Player extends GameEntity implements Comparable<Player> {
         inboundTokens.remove(c);
     }
 
-    public void onMulliganned() {
-        game.fireEvent(new GameEventMulligan(this)); // quest listener may interfere here
+    public void onMulliganned(AbstractMulligan mulligan) {
+        game.fireEvent(new GameEventMulligan(this, mulligan)); // quest listener may interfere here
         final int newHand = getCardsIn(ZoneType.Hand).size();
         stats.notifyHasMulliganed();
         stats.notifyOpeningHandSize(newHand);
