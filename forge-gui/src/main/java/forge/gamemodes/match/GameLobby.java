@@ -35,7 +35,7 @@ public abstract class GameLobby implements IHasGameType {
     private final static int MAX_PLAYERS = 8;
 
     private GameLobbyData data = new GameLobbyData();
-    private GameType currentGameType = GameType.Constructed;
+    // private GameType currentGameType = GameType.Constructed; // Removed - GameType determined at start based on variants
     private int lastArchenemy = 0;
 
     private IUpdateable listener;
@@ -67,12 +67,27 @@ public abstract class GameLobby implements IHasGameType {
         updateView(true);
     }
 
+    // Removed getGameType and setGameType as the final type is determined at game start
+    // public GameType getGameType() { ... }
+    // public void setGameType(final GameType type) { ... }
+
+    @Override // Implement IHasGameType based on applied variants
     public GameType getGameType() {
-        return currentGameType;
+        // Determine effective game type based on applied variants (simplified logic)
+        if (hasVariant(GameType.Commander)) return GameType.Commander;
+        if (hasVariant(GameType.Oathbreaker)) return GameType.Oathbreaker;
+        if (hasVariant(GameType.TinyLeaders)) return GameType.TinyLeaders;
+        if (hasVariant(GameType.Brawl)) return GameType.Brawl;
+        if (hasVariant(GameType.MomirBasic)) return GameType.MomirBasic;
+        if (hasVariant(GameType.MoJhoSto)) return GameType.MoJhoSto;
+        if (hasVariant(GameType.Vanguard)) return GameType.Vanguard;
+        if (hasVariant(GameType.Planechase)) return GameType.Planechase;
+        if (hasVariant(GameType.Archenemy)) return GameType.Archenemy;
+        if (hasVariant(GameType.ArchenemyRumble)) return GameType.ArchenemyRumble;
+        if (hasVariant(GameType.GRINDER)) return GameType.GRINDER; // Check for Grinder
+        return GameType.Constructed; // Default base type
     }
-    public void setGameType(final GameType type) {
-        currentGameType = type;
-    }
+
 
     public boolean hasAnyVariant() {
         return !data.appliedVariants.isEmpty();
@@ -217,7 +232,7 @@ public abstract class GameLobby implements IHasGameType {
     }
 
     public void applyVariant(final GameType variant) {
-        setGameType(variant);
+        // setGameType(variant); // Removed - GameType determined at start
         data.appliedVariants.add(variant);
 
         //ensure other necessary variants are unchecked
@@ -288,19 +303,9 @@ public abstract class GameLobby implements IHasGameType {
             return;
         }
 
-        if (variant == currentGameType) {
-            if (hasVariant(GameType.Commander)) {
-                currentGameType = GameType.Commander;
-            } else if (hasVariant(GameType.Oathbreaker)) {
-                currentGameType = GameType.Oathbreaker;
-            } else if (hasVariant(GameType.TinyLeaders)) {
-                currentGameType = GameType.TinyLeaders;
-            } else if (hasVariant(GameType.Brawl)) {
-                currentGameType = GameType.Brawl;
-            } else {
-                currentGameType = GameType.Constructed;
-            }
-        }
+        // Removed logic that resets currentGameType
+        // if (variant == currentGameType) { ... }
+
         updateView(true);
     }
 
@@ -415,7 +420,8 @@ public abstract class GameLobby implements IHasGameType {
             final int avatar = slot.getAvatarIndex();
             final int sleeve = slot.getSleeveIndex();
             final boolean isArchenemy = slot.isArchenemy();
-            final int team = GameType.Archenemy.equals(currentGameType) && !isArchenemy ? 1 : slot.getTeam();
+            // Determine team based on Archenemy variant being applied, not currentGameType
+            final int team = hasVariant(GameType.Archenemy) && !isArchenemy ? 1 : slot.getTeam();
             final Set<AIOption> aiOptions = slot.getAiOptions();
 
             final boolean isAI = slot.getType() == LobbySlotType.AI;
@@ -521,8 +527,12 @@ public abstract class GameLobby implements IHasGameType {
 
         //if above checks succeed, return runnable that can be used to finish starting game
         return () -> {
+            // Determine the final GameType based on applied variants
+            final GameType finalGameType = getGameType(); // Use the new getGameType() logic
+
             hostedMatch = GuiBase.getInterface().hostMatch();
-            hostedMatch.startMatch(GameType.Constructed, variantTypes, players, guis);
+            // Pass the determined finalGameType instead of hardcoding Constructed
+            hostedMatch.startMatch(finalGameType, variantTypes, players, guis);
 
             for (final Player p : hostedMatch.getGame().getPlayers()) {
                 final LobbySlot slot = playerToSlot.get(p.getRegisteredPlayer());

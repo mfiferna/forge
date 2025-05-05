@@ -324,6 +324,7 @@ public class VLobby implements ILobbyView {
         } else {
             populateDeckPanel(lobby.getGameType());
         }
+        updateVariantCheckboxStates(); // Add call here to ensure states are correct on update - This call is correct now
         refreshPanels(true, true);
     }
 
@@ -627,9 +628,11 @@ public class VLobby implements ILobbyView {
         return iPlayer == playerWithFocus;
     }
 
+    // This method might be obsolete now as GameType is determined at start based on variants.
+    // Keeping it for now but removing the direct call to the removed lobby.setGameType.
     void setCurrentGameMode(final GameType mode) {
-        lobby.setGameType(mode);
-        update(true);
+        // lobby.setGameType(mode); // Removed call to non-existent method
+        update(true); // Update the view based on potentially changed variant selections
     }
 
     private boolean isPlayerAI(final int playernum) {
@@ -762,7 +765,9 @@ public class VLobby implements ILobbyView {
                 } else {
                     lobby.removeVariant(variantType);
                 }
-                VLobby.this.update(false);
+                // VLobby.this.update(false); // Defer update call
+                VLobby.this.updateVariantCheckboxStates(); // Update checkbox states immediately after lobby change - Corrected call
+                VLobby.this.refreshPanels(false, false); // Refresh panels without full update if needed
             });
         }
     }
@@ -872,10 +877,9 @@ public class VLobby implements ILobbyView {
                 if (!cp.getRules().getAiHints().getRemRandomDecks()) {
                     nonRandomAiAvatars.add(cp);
                 }
-            }
-        }
+            } // Correct closing brace for the inner if
+        } // Correct closing brace for the outer for loop
     }
-
     /** update vanguard list. */
     public void updateVanguardList(final int playerIndex) {
         final FList<Object> vgdList = getVanguardLists().get(playerIndex);
@@ -889,4 +893,41 @@ public class VLobby implements ILobbyView {
             vgdList.setSelectedIndex(0);
         }
     }
+
+   /**
+    * Updates the enabled/disabled state of variant checkboxes based on Grinder selection.
+    */
+   private void updateVariantCheckboxStates() {
+       final boolean isGrinderSelected = lobby.hasVariant(GameType.GRINDER);
+       final ImmutableList<VariantCheckBox> checkBoxes = lobby.isAllowNetworking() ? vntBoxesNetwork : vntBoxesLocal;
+
+       if (isGrinderSelected) {
+           // If Grinder is selected, disable all other variants
+           for (final VariantCheckBox vcb : checkBoxes) {
+               if (vcb.variant != GameType.GRINDER) {
+                   if (vcb.isSelected()) {
+                       vcb.setSelected(false); // Deselect others if Grinder is chosen
+                   }
+                   vcb.setEnabled(false);
+               } else {
+                   vcb.setEnabled(true); // Ensure Grinder itself is enabled
+               }
+           }
+       } else {
+           // If Grinder is not selected, enable all variants initially
+           boolean anyOtherVariantSelected = false;
+           for (final VariantCheckBox vcb : checkBoxes) {
+                vcb.setEnabled(true);
+                if (vcb.variant != GameType.GRINDER && vcb.isSelected()) {
+                    anyOtherVariantSelected = true;
+                }
+           }
+           // If any *other* variant is selected, disable Grinder
+           if (anyOtherVariantSelected) {
+               vntGrinder.setEnabled(false);
+           } else {
+               vntGrinder.setEnabled(true); // Ensure Grinder is enabled if no others are selected
+           }
+       }
+   }
 }

@@ -40,7 +40,9 @@ public enum DeckType {
     NET_ARCHIVE_PAUPER_DECK("lblNetArchivePauperDecks"),
     NET_ARCHIVE_LEGACY_DECK("lblNetArchiveLegacyDecks"),
     NET_ARCHIVE_VINTAGE_DECK("lblNetArchiveVintageDecks"),
-    NET_ARCHIVE_BLOCK_DECK("lblNetArchiveBlockDecks");
+    NET_ARCHIVE_BLOCK_DECK("lblNetArchiveBlockDecks"),
+    GRINDER_DECK("lblGrinderDecks"), // Added for Grinder
+    RANDOM_GRINDER_DECK("lblRandomGrinderDecks"); // Added for Grinder
 
     public static DeckType[] ConstructedOptions;
     public static DeckType[] CommanderOptions;
@@ -71,7 +73,9 @@ public enum DeckType {
                     DeckType.NET_ARCHIVE_PAUPER_DECK,
                     DeckType.NET_ARCHIVE_LEGACY_DECK,
                     DeckType.NET_ARCHIVE_VINTAGE_DECK,
-                    DeckType.NET_ARCHIVE_BLOCK_DECK
+                    DeckType.NET_ARCHIVE_BLOCK_DECK,
+                    DeckType.GRINDER_DECK,             // Added for Grinder
+                    DeckType.RANDOM_GRINDER_DECK      // Added for Grinder
             };
         } else {
             ConstructedOptions = new DeckType[]{
@@ -91,7 +95,9 @@ public enum DeckType {
                     DeckType.NET_ARCHIVE_PAUPER_DECK,
                     DeckType.NET_ARCHIVE_LEGACY_DECK,
                     DeckType.NET_ARCHIVE_VINTAGE_DECK,
-                    DeckType.NET_ARCHIVE_BLOCK_DECK
+                    DeckType.NET_ARCHIVE_BLOCK_DECK,
+                    DeckType.GRINDER_DECK,             // Added for Grinder
+                    DeckType.RANDOM_GRINDER_DECK      // Added for Grinder
             };
         }
     }

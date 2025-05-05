@@ -112,7 +112,7 @@ public enum DeckFormat {
     Vanguard       ( Range.between(60, Integer.MAX_VALUE), Range.is(0), 4),
     Planechase     ( Range.between(60, Integer.MAX_VALUE), Range.is(0), 4),
     Archenemy      ( Range.between(60, Integer.MAX_VALUE), Range.is(0), 4),
-    GRINDER        ( Range.is(30),                         Range.is(0), 4), // Added for Grinder format
+    GRINDER        ( Range.between(20, 30),                Range.is(0), 4), // Added for Grinder format
     Puzzle         ( Range.between(0, Integer.MAX_VALUE), Range.is(0), 4);
 
     private final Range<Integer> mainRange;

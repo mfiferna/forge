@@ -336,6 +336,17 @@ public class PlayerControllerForTests extends PlayerController {
     }
 
     @Override
+    public CardCollection grinderMulliganDiscardCards(final Player mulliganingPlayer, int cardsToDiscard) {
+        // Simple strategy for tests: discard the first 'cardsToDiscard' cards.
+        CardCollection hand = new CardCollection(player.getCardsIn(ZoneType.Hand));
+        if (hand.size() <= cardsToDiscard) {
+            return hand; // Return the whole hand if not enough cards
+        }
+        // Return the first 'cardsToDiscard' cards
+        return new CardCollection(hand.subList(0, cardsToDiscard));
+    }
+
+    @Override
     public boolean mulliganKeepHand(Player firstPlayer, int cardsToReturn) {
         return true;
     }

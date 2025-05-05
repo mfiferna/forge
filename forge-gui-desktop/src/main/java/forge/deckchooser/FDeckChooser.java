@@ -286,6 +286,29 @@ public class FDeckChooser extends JPanel implements IDecksComboBoxListener {
         updateDecks(DeckProxy.getNetArchiveBlockDecks(NetDeckArchiveBlock), ItemManagerConfig.NET_DECKS);
     }
 
+    private void updateGrinderDecks() {
+        // Filter constructed decks to only show those valid for Grinder format
+        List<DeckProxy> grinderDecks = new ArrayList<>();
+        DeckFormat grinderFormat = DeckFormat.GRINDER; // Use the correct format
+        for (DeckProxy deck : DeckProxy.getAllConstructedDecks()) {
+             Deck d = deck.getDeck();
+             if (d != null && grinderFormat.getDeckConformanceProblem(d) == null) {
+                 grinderDecks.add(deck);
+             }
+        }
+        updateDecks(grinderDecks, ItemManagerConfig.CONSTRUCTED_DECKS); // Use constructed config for display
+    }
+
+    private void updateRandomGrinderDecks() {
+        // For random selection, we first list all valid Grinder decks.
+        // The "Random Deck" button will then pick one from the displayed list.
+        updateGrinderDecks();
+        btnRandom.setText(localizer.getMessage("lblRandomDeck")); // Keep standard random button text
+        // Ensure single selection for random pick
+        lstDecks.setAllowMultipleSelections(false);
+    }
+
+
     public Deck getDeck() {
         final DeckProxy proxy = lstDecks.getSelectedItem();
         if (proxy == null) {
@@ -646,6 +669,12 @@ public class FDeckChooser extends JPanel implements IDecksComboBoxListener {
                 break;
             case NET_ARCHIVE_BLOCK_DECK:
                 updateNetArchiveBlockDecks();
+                break;
+            case GRINDER_DECK: // Added case for Grinder Decks
+                updateGrinderDecks();
+                break;
+            case RANDOM_GRINDER_DECK: // Added case for Random Grinder Decks
+                updateRandomGrinderDecks();
                 break;
             default:
                 break; //other deck types not currently supported here

@@ -797,6 +797,24 @@ public class PlayerControllerAi extends PlayerController {
     }
 
     @Override
+    public CardCollection grinderMulliganDiscardCards(final Player mulliganingPlayer, int cardsToDiscard) {
+        // AI strategy: Discard the highest CMC cards.
+        CardCollection hand = new CardCollection(player.getCardsIn(ZoneType.Hand));
+        if (hand.size() <= cardsToDiscard) {
+            // Should not happen if logic is correct, but return hand if it does.
+            return hand; // Return CardCollection directly
+        }
+
+        // Sort hand by CMC descending (highest CMC first)
+        hand.sort(Comparator.comparingInt((Card c) -> c.getCMC()).reversed()); // Use explicit lambda
+
+        // Select the top 'cardsToDiscard' cards (highest CMC)
+        CardCollection toDiscard = new CardCollection(hand.subList(0, cardsToDiscard));
+
+        return toDiscard; // Return CardCollection directly
+    }
+
+    @Override
     public void declareAttackers(Player attacker, Combat combat) {
         brains.declareAttackers(attacker, combat);
     }
