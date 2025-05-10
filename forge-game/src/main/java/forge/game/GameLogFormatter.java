@@ -15,7 +15,6 @@ import forge.game.event.GameEventCardDamaged.DamageType;
 import forge.game.player.Player;
 import forge.game.player.RegisteredPlayer;
 import forge.game.spellability.TargetChoices;
-import forge.game.zone.ZoneType;
 import forge.util.*;
 import forge.util.maps.MapOfLists;
 
@@ -298,7 +297,8 @@ public class GameLogFormatter extends IGameEventVisitor.Base<GameLogEntry> {
 
     @Override
     public GameLogEntry visit(GameEventMulligan ev) {
-        String message = localizer.getMessage("lblPlayerHasMulliganedDownToNCards").replace("%d", String.valueOf(ev.player.getZone(ZoneType.Hand).size())).replace("%s", ev.player.toString());
+        int handSizeAfterMulligan = ev.mulligan.finalHandSize();
+        String message = localizer.getMessage("lblPlayerHasMulliganedDownToNCards").replace("%d", String.valueOf(handSizeAfterMulligan)).replace("%s", ev.player.toString());
         return new GameLogEntry(GameLogEntryType.MULLIGAN, message);
     }
 

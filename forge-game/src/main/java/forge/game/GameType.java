@@ -69,7 +69,8 @@ public enum GameType {
         deck.getOrCreate(DeckSection.Avatar).add(StaticData.instance().getVariantCards()
                 .getCard("Stonehewer Giant Avatar"), 1);
         return deck;
-    });
+    }),
+    Grinder             (DeckFormat.Constructed, false, true, true, "lblGrinder", "lblGrinderDesc");
 
     private final DeckFormat deckFormat;
     private final boolean isCardPoolLimited, canSideboard, addWonCardsMidGame;

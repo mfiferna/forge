@@ -20,7 +20,9 @@ package forge.screens.deckeditor.controllers;
 import forge.StaticData;
 import forge.card.CardEdition;
 import forge.deck.*;
+import forge.game.GameType;
 import forge.item.PaperCard;
+import forge.itemmanager.ItemManager;
 import forge.screens.deckeditor.menus.DeckFileMenu;
 import forge.screens.deckeditor.views.VCurrentDeck;
 import forge.screens.home.gauntlet.*;
@@ -429,7 +431,67 @@ public class DeckController<T extends DeckBase> {
 
         VCurrentDeck.SINGLETON_INSTANCE.getTabLabel().setText(tabCaption);
         VCurrentDeck.SINGLETON_INSTANCE.getTxfTitle().setText(title);
-        VCurrentDeck.SINGLETON_INSTANCE.getItemManager().setCaption(itemManagerCaption);
+
+        // Update validation status along with captions
+        updateValidationDisplay();
+
         DeckFileMenu.updateSaveEnabled();
+    }
+
+    // New method to handle deck validation display
+    private void updateValidationDisplay() {
+        if (model == null) return; // No deck loaded
+
+        ItemManager<?> deckItemManager = VCurrentDeck.SINGLETON_INSTANCE.getItemManager();
+        if (deckItemManager == null) return; // ItemManager not ready
+
+        int currentSize = 0;
+        // Cast model to Deck to access specific methods, assuming it's a Deck in this context
+        Deck deckModel = (model instanceof Deck) ? (Deck) model : null;
+
+        if (deckModel != null && deckModel.getMain() != null) {
+            currentSize = deckModel.getMain().countAll(); // Get main deck size directly from model
+        }
+
+        String validationStatus = "";
+        String deckSizeString = "(" + currentSize + ")"; // Default display just shows main deck count
+
+        // Determine the correct DeckFormat based on the editor's GameType
+        DeckFormat format = view.getGameType().getDeckFormat();
+
+        if (view.getGameType() == GameType.Grinder) {
+            // Grinder specific validation
+            if (currentSize < 20) {
+                validationStatus = " (Too few cards! Min 20)";
+            } else if (currentSize > 30) {
+                validationStatus = " (Too many cards! Max 30)";
+            } else {
+                // Check base constructed rules for Grinder decks within size limits
+                String conformanceProblem = DeckFormat.Constructed.getDeckConformanceProblem(deckModel); // Use the casted variable
+                if (conformanceProblem != null) {
+                    validationStatus = " (Invalid: " + conformanceProblem + ")";
+                } else {
+                    validationStatus = " (Legal size)";
+                }
+            }
+        } else if (format != null) {
+            // Standard validation for other formats
+            String conformanceProblem = format.getDeckConformanceProblem(deckModel); // Use the casted variable
+            if (conformanceProblem != null) {
+                validationStatus = " (Invalid: " + conformanceProblem + ")";
+            } else {
+                 validationStatus = " (Legal)"; // Indicate legal if no problems found
+            }
+            // Include sideboard size for standard formats if applicable
+            int sbSize = (deckModel == null || deckModel.get(DeckSection.Sideboard) == null) ? 0 : deckModel.get(DeckSection.Sideboard).countAll();
+            if (sbSize > 0) {
+                 deckSizeString = "(" + currentSize + " + " + sbSize + " SB)";
+            }
+        } else {
+             validationStatus = " (Unknown Format)";
+        }
+
+        // Update the label using the new setter method
+        deckItemManager.setDeckValidationText(deckSizeString + validationStatus);
     }
 }

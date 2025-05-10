@@ -90,8 +90,9 @@ public class VLobby implements ILobbyView {
     private final VariantCheckBox vntPlanechase = new VariantCheckBox(GameType.Planechase);
     private final VariantCheckBox vntArchenemy = new VariantCheckBox(GameType.Archenemy);
     private final VariantCheckBox vntArchenemyRumble = new VariantCheckBox(GameType.ArchenemyRumble);
+    private final VariantCheckBox vntGrinder = new VariantCheckBox(GameType.Grinder);
     private final ImmutableList<VariantCheckBox> vntBoxesLocal  =
-            ImmutableList.of(vntVanguard, vntMomirBasic, vntMoJhoSto, vntCommander, vntOathbreaker, vntBrawl, vntTinyLeaders, vntPlanechase, vntArchenemy, vntArchenemyRumble);
+            ImmutableList.of(vntVanguard, vntMomirBasic, vntMoJhoSto, vntCommander, vntOathbreaker, vntBrawl, vntTinyLeaders, vntGrinder, vntPlanechase, vntArchenemy, vntArchenemyRumble);
     private final ImmutableList<VariantCheckBox> vntBoxesNetwork =
             ImmutableList.of(vntVanguard, vntMomirBasic, vntMoJhoSto, vntCommander, vntOathbreaker, vntBrawl, vntTinyLeaders /*, vntPlanechase, vntArchenemy, vntArchenemyRumble */);
 
@@ -144,7 +145,12 @@ public class VLobby implements ILobbyView {
         variantsPanel.setOpaque(false);
         variantsPanel.add(newLabel(localizer.getMessage("lblVariants")));
         for (final VariantCheckBox vcb : vntBoxes) {
+            // Add checkboxes to the panel
             variantsPanel.add(vcb);
+            // Ensure Grinder is added if it's in the list (it's only in vntBoxesLocal currently)
+            if (vcb == vntTinyLeaders && vntBoxes == vntBoxesLocal) { // Add Grinder after TinyLeaders for local games
+                variantsPanel.add(vntGrinder);
+            }
         }
 
         constructedFrame.add(new FScrollPane(variantsPanel, false, true,
@@ -579,6 +585,7 @@ public class VLobby implements ILobbyView {
         case Oathbreaker:
         case TinyLeaders:
         case Brawl:
+        case Grinder:
             decksFrame.add(getDeckChooser(playerWithFocus), "grow, push");
             break;
         case Planechase:

@@ -1,0 +1,257 @@
+diff --git a/forge-ai/src/main/java/forge/ai/AiProps.java b/forge-ai/src/main/java/forge/ai/AiProps.java
+index ee162987ba..9cf2b0db24 100644
+--- a/forge-ai/src/main/java/forge/ai/AiProps.java
++++ b/forge-ai/src/main/java/forge/ai/AiProps.java
+@@ -27,7 +27,7 @@ public enum AiProps { /** */
+     DEFAULT_MAX_PLANAR_DIE_ROLLS_PER_TURN ("1"), /** */
+     DEFAULT_MIN_TURN_TO_ROLL_PLANAR_DIE ("3"), /** */
+     DEFAULT_PLANAR_DIE_ROLL_CHANCE ("50"), /** */
+-    MULLIGAN_THRESHOLD ("5"), /** */
++    MULLIGAN_THRESHOLD ("4"), /** */
+     PLANAR_DIE_ROLL_HESITATION_CHANCE ("10"),
+     HOLD_LAND_DROP_FOR_MAIN2_IF_UNUSED ("0"), /** */
+     HOLD_LAND_DROP_ONLY_IF_HAVE_OTHER_PERMS ("true"), /** */
+diff --git a/forge-core/src/main/java/forge/deck/DeckFormat.java b/forge-core/src/main/java/forge/deck/DeckFormat.java
+index 4d05053adb..11bb1e36fe 100644
+--- a/forge-core/src/main/java/forge/deck/DeckFormat.java
++++ b/forge-core/src/main/java/forge/deck/DeckFormat.java
+@@ -47,7 +47,7 @@ import java.util.Set;
+  */
+ public enum DeckFormat {
+     //               Main board: allowed size             SB: restriction   Max distinct non basic cards
+-    Constructed    ( Range.between(60, Integer.MAX_VALUE), Range.between(0, 15), 4),
++    Constructed    ( Range.between(20, 30), Range.between(0, 5), 4),
+     QuestDeck      ( Range.between(40, Integer.MAX_VALUE), Range.between(0, 15), 4),
+     Limited        ( Range.between(40, Integer.MAX_VALUE), null, Integer.MAX_VALUE),
+     Commander      ( Range.is(99),                         Range.between(0, 10), 1, null, new Predicate<PaperCard>() {
+diff --git a/forge-game/src/main/java/forge/game/Game.java b/forge-game/src/main/java/forge/game/Game.java
+index 509553c44f..c675603da1 100644
+--- a/forge-game/src/main/java/forge/game/Game.java
++++ b/forge-game/src/main/java/forge/game/Game.java
+@@ -293,7 +293,7 @@ public class Game {
+             } else {
+                 pl.setStartingLife(psc.getStartingLife());
+             }
+-            pl.setMaxHandSize(psc.getStartingHand());
++            pl.setMaxHandSize(psc.getMaxHandSize());
+             pl.setStartingHandSize(psc.getStartingHand());
+ 
+             if (psc.getManaShards() > 0) {
+diff --git a/forge-game/src/main/java/forge/game/GameLogFormatter.java b/forge-game/src/main/java/forge/game/GameLogFormatter.java
+index effd2c793e..98a2fc90e8 100644
+--- a/forge-game/src/main/java/forge/game/GameLogFormatter.java
++++ b/forge-game/src/main/java/forge/game/GameLogFormatter.java
+@@ -15,7 +15,6 @@ import forge.game.event.GameEventCardDamaged.DamageType;
+ import forge.game.player.Player;
+ import forge.game.player.RegisteredPlayer;
+ import forge.game.spellability.TargetChoices;
+-import forge.game.zone.ZoneType;
+ import forge.util.CardTranslation;
+ import forge.util.Lang;
+ import forge.util.Localizer;
+@@ -286,7 +285,8 @@ public class GameLogFormatter extends IGameEventVisitor.Base<GameLogEntry> {
+ 
+     @Override
+     public GameLogEntry visit(GameEventMulligan ev) {
+-        String message = localizer.getMessage("lblPlayerHasMulliganedDownToNCards").replace("%d", String.valueOf(ev.player.getZone(ZoneType.Hand).size())).replace("%s", ev.player.toString());
++        int handSizeAfterMulligan = ev.mulligan.finalHandSize();
++        String message = localizer.getMessage("lblPlayerHasMulliganedDownToNCards").replace("%d", String.valueOf(handSizeAfterMulligan)).replace("%s", ev.player.toString());
+         return new GameLogEntry(GameLogEntryType.MULLIGAN, message);
+     }
+ 
+diff --git a/forge-game/src/main/java/forge/game/StaticEffect.java b/forge-game/src/main/java/forge/game/StaticEffect.java
+index 88b48d8fb8..97e8064b9d 100644
+--- a/forge-game/src/main/java/forge/game/StaticEffect.java
++++ b/forge-game/src/main/java/forge/game/StaticEffect.java
+@@ -187,7 +187,7 @@ public class StaticEffect {
+         // modify players
+         for (final Player p : affectedPlayers) {
+             p.setUnlimitedHandSize(false);
+-            p.setMaxHandSize(p.getStartingHandSize());
++            p.setMaxHandSize(p.getMaxHandSize());
+             p.removeChangedKeywords(getTimestamp(), ability.getId());
+ 
+             p.removeMaxLandPlays(getTimestamp());
+diff --git a/forge-game/src/main/java/forge/game/event/GameEventMulligan.java b/forge-game/src/main/java/forge/game/event/GameEventMulligan.java
+index 30dcd25391..3bf9dbb089 100644
+--- a/forge-game/src/main/java/forge/game/event/GameEventMulligan.java
++++ b/forge-game/src/main/java/forge/game/event/GameEventMulligan.java
+@@ -1,5 +1,6 @@
+ package forge.game.event;
+ 
++import forge.game.mulligan.AbstractMulligan;
+ import forge.game.player.Player;
+ 
+ /** 
+@@ -9,8 +10,10 @@ import forge.game.player.Player;
+ public class GameEventMulligan extends GameEvent {
+ 
+     public final Player player;
+-    public GameEventMulligan(Player p) {
++    public final AbstractMulligan mulligan;
++    public GameEventMulligan(Player p, AbstractMulligan m) {
+         player = p;
++        mulligan = m;
+     }
+ 
+     @Override
+diff --git a/forge-game/src/main/java/forge/game/mulligan/AbstractMulligan.java b/forge-game/src/main/java/forge/game/mulligan/AbstractMulligan.java
+index 4e16e01a69..1b0db4ea85 100644
+--- a/forge-game/src/main/java/forge/game/mulligan/AbstractMulligan.java
++++ b/forge-game/src/main/java/forge/game/mulligan/AbstractMulligan.java
+@@ -23,6 +23,9 @@ public abstract class AbstractMulligan {
+ 
+     public abstract boolean canMulligan();
+     public abstract int handSizeAfterNextMulligan();
++    public int finalHandSize() {
++        return player.getStartingHandSize() - tuckCardsAfterKeepHand();
++    }
+     public int tuckCardsAfterKeepHand() {
+         return 0;
+     }
+@@ -42,7 +45,7 @@ public abstract class AbstractMulligan {
+         player.shuffle(null);
+         timesMulliganed++;
+         mulliganDraw();
+-        player.onMulliganned();
++        player.onMulliganned(this);
+     }
+ 
+     public void keep() {
+diff --git a/forge-game/src/main/java/forge/game/mulligan/LondonMulligan.java b/forge-game/src/main/java/forge/game/mulligan/LondonMulligan.java
+index 5180416676..e28529cae9 100644
+--- a/forge-game/src/main/java/forge/game/mulligan/LondonMulligan.java
++++ b/forge-game/src/main/java/forge/game/mulligan/LondonMulligan.java
+@@ -5,7 +5,14 @@ import forge.game.player.Player;
+ 
+ public class LondonMulligan extends AbstractMulligan {
+     public LondonMulligan(Player p, boolean firstMullFree) {
+-        super(p, firstMullFree);
++        super(p, false);
++        super.timesMulliganed = 2;
++    }
++
++    @Override
++    public void keep() {
++        super.kept = true;
++        // player.onMulliganned();
+     }
+ 
+     @Override
+@@ -15,17 +22,12 @@ public class LondonMulligan extends AbstractMulligan {
+ 
+     @Override
+     public int handSizeAfterNextMulligan() {
+-        return player.getMaxHandSize();
++        return player.getStartingHandSize();
+     }
+ 
+     @Override
+     public void mulliganDraw() {
+-        player.drawCards(handSizeAfterNextMulligan());
+-        int tuckingCards = tuckCardsAfterKeepHand();
+-
+-        for (final Card c : player.getController().londonMulliganReturnCards(player, tuckingCards)) {
+-            player.getGame().getAction().moveToLibrary(c, -1, null);
+-        }
++        player.drawCards(player.getStartingHandSize());
+     }
+ 
+     @Override
+@@ -37,4 +39,16 @@ public class LondonMulligan extends AbstractMulligan {
+         int extraCard = firstMulliganFree ? 1 : 0;
+         return timesMulliganed - extraCard;
+     }
++
++    @Override
++    public void afterMulligan() {
++
++        int tuckingCards = tuckCardsAfterKeepHand();
++        for (final Card c : player.getController().londonMulliganReturnCards(player, tuckingCards)) {
++            player.getGame().getAction().moveToLibrary(c, -1, null);
++        }
++
++        super.afterMulligan();
++    }
++    
+ }
+diff --git a/forge-game/src/main/java/forge/game/player/Player.java b/forge-game/src/main/java/forge/game/player/Player.java
+index 33a6801007..c32b3a9085 100644
+--- a/forge-game/src/main/java/forge/game/player/Player.java
++++ b/forge-game/src/main/java/forge/game/player/Player.java
+@@ -86,6 +86,7 @@ import forge.game.keyword.KeywordCollection.KeywordCollectionView;
+ import forge.game.keyword.KeywordInterface;
+ import forge.game.keyword.KeywordsChange;
+ import forge.game.mana.ManaPool;
++import forge.game.mulligan.AbstractMulligan;
+ import forge.game.phase.PhaseHandler;
+ import forge.game.phase.PhaseType;
+ import forge.game.replacement.ReplacementEffect;
+@@ -134,8 +135,8 @@ public class Player extends GameEntity implements Comparable<Player> {
+ 
+     private final Map<Card, Integer> commanderDamage = Maps.newHashMap();
+ 
+-    private int life = 20;
+-    private int startingLife = 20;
++    private int life = 10;
++    private int startingLife = 10;
+     private int lifeStartedThisTurnWith = startingLife;
+     private int spellsCastThisTurn;
+     private int spellsCastThisGame;
+@@ -162,7 +163,7 @@ public class Player extends GameEntity implements Comparable<Player> {
+     private int numForetoldThisTurn;
+     private int numCardsInHandStartedThisTurnWith;
+     private int venturedThisTurn;
+-    private int maxHandSize = 7;
++    private int maxHandSize = 5;
+     private int startingHandSize = 7;
+     private boolean unlimitedHandSize = false;
+     private Card lastDrawnCard;
+@@ -2697,8 +2698,8 @@ public class Player extends GameEntity implements Comparable<Player> {
+         inboundTokens.remove(c);
+     }
+ 
+-    public void onMulliganned() {
+-        game.fireEvent(new GameEventMulligan(this)); // quest listener may interfere here
++    public void onMulliganned(AbstractMulligan mulligan) {
++        game.fireEvent(new GameEventMulligan(this, mulligan)); // quest listener may interfere here
+         final int newHand = getCardsIn(ZoneType.Hand).size();
+         stats.notifyHasMulliganed();
+         stats.notifyOpeningHandSize(newHand);
+diff --git a/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java b/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java
+index 6cb37ae089..95dd5a22de 100644
+--- a/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java
++++ b/forge-game/src/main/java/forge/game/player/RegisteredPlayer.java
+@@ -24,8 +24,9 @@ public class RegisteredPlayer {
+     
+     private LobbyPlayer player = null;
+     
+-    private int startingLife = 20;
++    private int startingLife = 10;
+     private int startingHand = 7;
++    private int maxHandSize = 5;
+     private int manaShards = 0;
+     private Iterable<IPaperCard> cardsOnBattlefield = null;
+     private Iterable<IPaperCard> extraCardsOnBattlefield = null;
+@@ -101,6 +102,9 @@ public class RegisteredPlayer {
+     public int getStartingHand() {
+         return startingHand;
+     }
++    public int getMaxHandSize() {
++        return maxHandSize;
++    }
+     public void setStartingHand(int startingHand0) {
+         this.startingHand = startingHand0;
+     }
+diff --git a/forge-gui-desktop/src/main/java/forge/view/Main.java b/forge-gui-desktop/src/main/java/forge/view/Main.java
+index 2f6824ff4e..9884f050d5 100644
+--- a/forge-gui-desktop/src/main/java/forge/view/Main.java
++++ b/forge-gui-desktop/src/main/java/forge/view/Main.java
+@@ -39,6 +39,7 @@ public final class Main {
+             options.setRelease(BuildInfo.getVersionString());
+             options.setEnvironment(System.getProperty("os.name"));
+             options.setTag("Java Version", System.getProperty("java.version"));
++            options.setDsn("");
+         }, true);
+ 
+         // HACK - temporary solution to "Comparison method violates it's general contract!" crash

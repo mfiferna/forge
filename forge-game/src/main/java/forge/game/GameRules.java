@@ -77,7 +77,7 @@ public class GameRules {
         return sideboardForAI;
     }
     public void setSideboardForAI(final boolean sideboard) {
-        sideboardForAI = sideboard;
+        this.sideboardForAI = sideboard;
     }
 
     public boolean getAISideboardingEnabled() {
@@ -123,5 +123,21 @@ public class GameRules {
     }
     public void setWarnAboutAICards(final boolean warnAboutAICards) {
         this.warnAboutAICards = warnAboutAICards;
+    }
+
+    public boolean isGrinder() {
+        return gameType == GameType.Grinder;
+    }
+
+    public int getMaxHandSize() {
+        return isGrinder() ? 5 : 7;
+    }
+
+    public int getStartingLife() {
+        return isGrinder() ? 10 : 20;
+    }
+
+    public int[] getDeckSizeRange() {
+        return isGrinder() ? new int[]{20, 30} : new int[]{60, 100};
     }
 }

@@ -127,6 +127,10 @@ public final class CEditorConstructed extends CDeckEditor<Deck> {
 
                 wantUnique = true;
                 break;
+            case Grinder:
+                // Grinder uses the standard card pool like Constructed
+                normalPool = FModel.getAllCardsNoAlt();
+                break;
             default:
         }
 
@@ -188,6 +192,8 @@ public final class CEditorConstructed extends CDeckEditor<Deck> {
                 case TinyLeaders:
                 case Brawl:
                     return CardLimit.Singleton;
+                case Grinder:
+                    return CardLimit.Default; // Grinder follows standard 4-card limit
                 default:
             }
         }

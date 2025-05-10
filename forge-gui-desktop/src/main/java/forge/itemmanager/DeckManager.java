@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import forge.Singletons;
 import forge.deck.Deck;
+import forge.deck.DeckFormat;
 import forge.deck.DeckBase;
 import forge.deck.DeckProxy;
 import forge.deck.io.DeckPreferences;
@@ -347,7 +348,11 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
                 screen = FScreen.DECK_EDITOR_DRAFT;
                 editorCtrl = new CEditorLimited(FModel.getDecks().getWinston(), screen, getCDetailPicture());
                 break;
-
+            case Grinder:
+                screen = FScreen.DECK_EDITOR_CONSTRUCTED;
+                DeckPreferences.setCurrentDeck((deck != null) ? deck.toString() : "");
+                editorCtrl = new CEditorConstructed(getCDetailPicture(), this.gameType);
+                break;
             default:
                 return;
         }
@@ -389,6 +394,7 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
             case Constructed:
             case Draft:
             case Sealed:
+            case Grinder:
                 deck.deleteFromStorage();
                 break;
             case Quest:
@@ -484,4 +490,49 @@ public final class DeckManager extends ItemManager<DeckProxy> implements IHasGam
             FSkin.drawImage(g, /*overActionIndex == 0 ? icoDeleteOver : */icoEdit, imgSize - 1, -1, imgSize, imgSize);
         }
     }
+
+
+    public boolean validateDeck(DeckProxy deckProxy) {
+        Deck deck = deckProxy.getDeck();
+        if (deck == null) {
+            System.err.println("Cannot validate null deck proxy or underlying deck.");
+            return false;
+        }
+
+        // Use the GameType associated with the DeckManager instance.
+        GameType managerGameType = this.getGameType();
+
+        if (managerGameType == GameType.Grinder) {
+            // Grinder specific validation: Deck size 20-30
+            int deckSize = deck.getMain().countAll();
+            if (deckSize < 20 || deckSize > 30) {
+                 System.err.println("Deck '" + deck.getName() + "' failed Grinder size validation (20-30 cards): " + deckSize);
+                return false; // Failed Grinder size rule
+            }
+            // Grinder decks still need to conform to base Constructed rules (e.g., max 4 copies)
+            String conformanceProblem = DeckFormat.Constructed.getDeckConformanceProblem(deck);
+            if (conformanceProblem != null) {
+                 System.err.println("Deck '" + deck.getName() + "' failed base Constructed validation for Grinder: " + conformanceProblem);
+                 return false;
+            }
+            return true; // Passed Grinder validation
+        } else {
+            // Standard validation for other game types managed by this DeckManager
+            DeckFormat format = managerGameType.getDeckFormat();
+            if (format != null) {
+                String conformanceProblem = format.getDeckConformanceProblem(deck);
+                 if (conformanceProblem != null) {
+                     // Don't print error here, let the format handle reporting if needed
+                     // System.err.println("Deck '" + deck.getName() + "' failed validation for format " + format.name() + " (GameType: " + managerGameType.name() + "): " + conformanceProblem);
+                     return false;
+                 }
+
+                 return true; // Passed standard validation
+            }
+            // Default to true if no specific format check applies for the GameType
+            // System.err.println("Warning: No specific DeckFormat validation applied for GameType " + managerGameType.name() + " for deck '" + deck.getName() + "'. Assuming valid.");
+            return true;
+        }
+    }
+
 }

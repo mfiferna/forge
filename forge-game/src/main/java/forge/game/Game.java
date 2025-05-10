@@ -343,6 +343,10 @@ public class Game {
             }
             pl.setMaxHandSize(psc.getStartingHand());
             pl.setStartingHandSize(psc.getStartingHand());
+            // Apply Grinder specific max hand size limit AFTER setting initial based on startingHand
+            if (match.getRules().getGameType() == GameType.Grinder) {
+                pl.setMaxHandSize(5);
+            }
 
             if (psc.getManaShards() > 0) {
                 pl.setNumManaShards(psc.getManaShards());
